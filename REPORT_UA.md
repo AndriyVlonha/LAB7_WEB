@@ -1,14 +1,14 @@
-# Звіт з лабораторної роботи №6
+# Звіт з лабораторної роботи №7
 
 **Студент:** Влонга Андрій  
 **Група:** 42-КН  
-**Дата:** 16/03/2026
+**Дата:** 21/03/2026
 
 ---
 
 ## Мета роботи
 
-Навчитися працювати з анімацією в React за допомогою бібліотеки `framer-motion`. Реалізувати ефект «моргання» при кліку на колір світлофора, зміну яскравості та кількості морганнь. Дана робота є продовженням лабораторної роботи №5.
+Навчитися працювати з React Context API. Відрефакторити лабораторну роботу №6 використовуючи контекст замість локального стану. Встановити та інтегрувати бібліотеку `json-server` для збереження даних між перезапусками.
 
 ---
 
@@ -16,249 +16,289 @@
 
 ---
 
-### 1. Створення нового проєкту
+### 1. Створення проєкту на основі Lab 6
 
-Створено новий React-проєкт з назвою `traffic-lights-6` на основі попередньої лабораторної:
+Скопійовано проєкт `traffic-lights-6` як основу та встановлено нові залежності:
 
 ```bash
-pnpm create vite@latest traffic-lights-6 -- --template react
-cd traffic-lights-6
-pnpm install
-pnpm install framer-motion
-pnpm install react-router-dom
+npm install
+npm install json-server concurrently
 ```
 
+**Що додалось до `package.json`:**
+
+```json
+"scripts": {
+  "server": "json-server --watch db.json --port 3001",
+  "start": "concurrently \"npm run dev\" \"npm run server\""
+},
+"devDependencies": {
+  "concurrently": "^8.2.2",
+  "json-server": "^0.17.4"
+}
+```
 
 ---
 
-### 2. Встановлення бібліотеки framer-motion
+### 2. Структура проєкту
 
-Встановлено бібліотеку `framer-motion` для реалізації анімацій:
-
-```bash
-pnpm install framer-motion
-```
-
-**Опис:**
-- `framer-motion` — бібліотека анімацій для React
-- Надає компоненту `motion` для анімації DOM-елементів
-- Функція `animate()` використовується для програмної анімації через ref
-
----
-
-### 3. Структура проєкту
-
-**Структура файлів:**
-
-**Скріншот:**  
+**Скріншот:**
 <div align="center">
   <figure>
     <img src="Images/project_structure.png" width="60%" alt="Project Structure"/>
     <br/>
-    <sub><b>Рис. 1:</b> Структура проєкту traffic-lights-6</sub>
+    <sub><b>Рис. 1:</b> Структура проєкту traffic-lights-7</sub>
   </figure>
 </div>
 
 ---
 
-### 4. Реалізація ефекту моргання з framer-motion
+### 3. Створення db.json
 
-**Основний функціонал Lab 6 — анімація моргання при кліку.**
+Реалізовано структуру збереження даних для світлофора:
 
-Використано `useRef` для посилання на DOM-елемент лампи та функцію `animate()` з framer-motion.
+**Файл: `db.json`**
 
-
-**Опис:**
-- `useRef` — посилається напряму на DOM-елемент, без пошуку по документу
-- `animate(el, { opacity: frames })` — програмна анімація через framer-motion
-- Keyframes будуються динамічно залежно від `blinkCount`
-- `whileHover` та `whileTap` — мікроанімації наведення та кліку
-
-**Скріншот:**  
-<div align="center">
-  <figure>
-    <img src="Images/blink_animation.png" width="80%" alt="Blink Animation"/>
-    <br/>
-    <sub><b>Рис. 2:</b> Ефект моргання при кліку на лампу</sub>
-  </figure>
-</div>
-
----
-
-### 5. Реалізація слайдерів керування
-
-**Додаткове завдання — зміна яскравості та кількості морганнь.**
-
-На кожній сторінці світлофора реалізовано панель керування з двома слайдерами.
-
-**Код: `src/Pages/VerticalTrafficLight.jsx` (фрагмент)**
-
-```jsx
-const VerticalTrafficLight = () => {
-  const [lights, setLights]         = useState([makeLight(1)])
-  const [blinkCount, setBlinkCount] = useState(3)
-  const [brightness, setBrightness] = useState(1.0)
-
-  return (
-    <div className="tl-page">
-      <aside className="tl-sidebar">
-        <label className="ctrl-group">
-          <span className="ctrl-label">Кількість морганнь</span>
-          <input type="range" min="1" max="10" step="1"
-            value={blinkCount}
-            onChange={e => setBlinkCount(Number(e.target.value))} />
-          <span className="ctrl-val">{blinkCount}x</span>
-        </label>
-
-        <label className="ctrl-group">
-          <span className="ctrl-label">Яскравість</span>
-          <input type="range" min="0.15" max="1" step="0.05"
-            value={brightness}
-            onChange={e => setBrightness(parseFloat(e.target.value))} />
-          <span className="ctrl-val">{Math.round(brightness * 100)}%</span>
-        </label>
-
-        <button className="ctrl-add" onClick={addLight}>
-          + Додати світлофор
-        </button>
-      </aside>
-      {/* ... */}
-    </div>
-  )
+```json
+{
+  "lights": [
+    {
+      "id": 1,
+      "name": "Світлофор #1",
+      "colors": [
+        { "id": "red",    "label": "Червоний", "hex": "#ff3b3b", "clicks": 0 },
+        { "id": "yellow", "label": "Жовтий",   "hex": "#ffc107", "clicks": 0 },
+        { "id": "green",  "label": "Зелений",  "hex": "#00e676", "clicks": 0 }
+      ]
+    }
+  ],
+  "settings": {
+    "id": 1,
+    "blinkCount": 3,
+    "brightness": 1.0
+  }
 }
 ```
 
 **Опис:**
-- Слайдер **кількості морганнь** — від 1 до 10, впливає на кількість циклів анімації
-- Слайдер **яскравості** — від 15% до 100%, змінює opacity та filter лампи
-- Кольорова смужка під слайдером яскравості — візуальний індикатор
-- Стан незалежний для кожної сторінки
+- `lights` — масив світлофорів з кольорами та кількістю кліків
+- `settings` — глобальні налаштування (моргання, яскравість)
+- json-server автоматично створює REST API з цього файлу
 
-**Скріншот:**  
+**Скріншот:**
 <div align="center">
   <figure>
-    <img src="Images/controls_panel.png" width="80%" alt="Controls Panel"/>
+    <img src="Images/db_json.png" width="80%" alt="db.json"/>
     <br/>
-    <sub><b>Рис. 3:</b> Панель керування з слайдерами</sub>
+    <sub><b>Рис. 2:</b> Структура db.json після кількох кліків</sub>
   </figure>
 </div>
 
 ---
 
-### 6. Додавання декількох світлофорів
+### 4. Налаштування vite.config.js (proxy)
 
-**Додаткове завдання — можливість додавати кілька світлофорів.**
+Щоб уникнути CORS помилок при запитах до json-server:
 
-Реалізовано кнопку "+ Додати світлофор" яка додає нову картку з власним станом кліків.
+**Файл: `vite.config.js`**
 
-```jsx
-const makeLight = (id) => ({
-  id,
-  name: id === 1 ? 'Світлофор #1' : `Світлофор #${id}`,
-  clicks: { red: 0, yellow: 0, green: 0 },
+```js
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })
-
-const [lights, setLights] = useState([makeLight(1)])
-
-const addLight    = () => setLights(p => [...p, makeLight(Date.now())])
-const removeLight = (id) => setLights(p => p.filter(l => l.id !== id))
 ```
 
-**Важливо:** Кожен світлофор має унікальний `id` (через `Date.now()`), що забезпечує правильну анімацію — клік на третій світлофор мигає тільки його лампи, а не першого.
-
-**Скріншот:**  
-<div align="center">
-  <figure>
-    <img src="Images/multiple_lights.png" width="80%" alt="Multiple Traffic Lights"/>
-    <br/>
-    <sub><b>Рис. 4:</b> Декілька світлофорів з незалежними лічильниками</sub>
-  </figure>
-</div>
+**Опис:**
+- Запити з `/api/lights` перенаправляються на `http://localhost:3001/lights`
+- Vite і json-server працюють на різних портах (5173 і 3001)
 
 ---
 
-### 7. Анімоване з'явлення (додаткове завдання)
+### 5. Створення TrafficLightsContext (головне завдання)
 
-**Анімоване з'явлення при переході на сторінку та при додаванні картки.**
+**Файл: `src/context/TrafficLightsContext.jsx`**
 
 ```jsx
-// Поява сторінки
-<motion.div
-  className="traffic-light-page"
-  initial={{ opacity: 0, y: 24 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.35, ease: 'easeOut' }}
->
+import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 
-// Поява нової картки
-<motion.div
-  key={light.id}
-  initial={{ opacity: 0, y: 32, scale: 0.92 }}
-  animate={{ opacity: 1, y: 0, scale: 1 }}
-  exit={{ opacity: 0, scale: 0.85, y: -16 }}
-  layout
-  transition={{ type: 'spring', stiffness: 280, damping: 24 }}
->
+const TrafficLightsContext = createContext(null)
+
+export function TrafficLightsProvider({ children }) {
+  const [state, dispatch] = useReducer(reducer, {
+    lights: [], settings: { blinkCount: 3, brightness: 1.0 }, loading: true,
+  })
+
+  // Завантаження з json-server при монтуванні
+  useEffect(() => {
+    Promise.all([api.getLights(), api.getSettings()])
+      .then(([lights, settings]) => {
+        dispatch({ type: 'INIT', lights, settings })
+      })
+      .catch(() => {
+        dispatch({ type: 'INIT', lights: DEFAULT_LIGHTS, settings: DEFAULT_SETTINGS })
+      })
+  }, [])
+
+  const addLight = useCallback(async () => {
+    const newLight = { name: `Світлофор #${Date.now()}`, colors: [...] }
+    const saved = await api.createLight(newLight)   // POST /api/lights
+    dispatch({ type: 'ADD_LIGHT', light: saved })
+  }, [])
+
+  const clickColor = useCallback(async (lightId, colorId) => {
+    dispatch({ type: 'CLICK_COLOR', lightId, colorId })
+    await api.updateLight(lightId, { colors: updatedColors }) // PATCH /api/lights/:id
+  }, [state.lights])
+
+  return (
+    <TrafficLightsContext.Provider value={{
+      lights, settings, loading, addLight, removeLight, clickColor, updateSettings
+    }}>
+      {children}
+    </TrafficLightsContext.Provider>
+  )
+}
+
+export function useTrafficLights() {
+  return useContext(TrafficLightsContext)
+}
+```
+
+**Опис:**
+- `createContext()` — створює контейнер для глобального стану
+- `TrafficLightsProvider` — обгортає додаток, надає стан всім дочірнім компонентам
+- `useReducer` — керує складним станом через actions
+- `useTrafficLights()` — хук для доступу до контексту з будь-якого компонента
+- Кожна дія (клік, додавання) зберігається в `db.json` через json-server
+
+**Скріншот:**
+<div align="center">
+  <figure>
+    <img src="Images/context_file.png" width="80%" alt="Context File"/>
+    <br/>
+    <sub><b>Рис. 3:</b> Файл TrafficLightsContext.jsx</sub>
+  </figure>
+</div>
+
+---
+
+### 6. Обгортання додатку у Provider
+
+**Файл: `src/main.jsx`**
+
+```jsx
+// Lab 6 було:
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+)
+
+// Lab 7 стало:
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <TrafficLightsProvider>
+      <App />
+    </TrafficLightsProvider>
+  </StrictMode>
+)
+```
+
+**Опис:**
+- Provider обгортає весь додаток
+- Тому будь-який компонент всередині може отримати стан через `useTrafficLights()`
+
+---
+
+### 7. Рефакторинг сторінок (useState → useContext)
+
+**Файл: `src/Pages/VerticalTrafficLight.jsx`**
+
+```jsx
+// Lab 6 було:
+const [lights, setLights]         = useState([makeLight(1)])
+const [blinkCount, setBlinkCount] = useState(3)
+const [brightness, setBrightness] = useState(1.0)
+const addLight = () => setLights(p => [...p, makeLight(Date.now())])
+
+// Lab 7 стало:
+const { lights, settings, addLight, removeLight, clickColor, updateSettings }
+  = useTrafficLights()
+// useState повністю прибрано — стан береться з контексту
+```
+
+**Скріншот:**
+<div align="center">
+  <figure>
+    <img src="Images/vertical_page.png" width="80%" alt="Vertical Page"/>
+    <br/>
+    <sub><b>Рис. 4:</b> Сторінка вертикального світлофора</sub>
+  </figure>
+</div>
+
+---
+
+### 8. REST API запити до json-server
+
+```js
+const api = {
+  getLights:      ()         => fetch('/api/lights').then(r => r.json()),
+  getSettings:    ()         => fetch('/api/settings/1').then(r => r.json()),
+  createLight:    (data)     => fetch('/api/lights', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+  updateLight:    (id, data) => fetch(`/api/lights/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+  deleteLight:    (id)       => fetch(`/api/lights/${id}`, { method: 'DELETE' }),
+  updateSettings: (data)     => fetch('/api/settings/1', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+}
 ```
 
 ---
 
-### 8. Сторінки вертикального та горизонтального світлофора
-
-**Скріншоти:**
-
-<div align="center">
-
-  <img src="Images/vertical_page.png" width="400" />
-  <p><b>Рисунок 5.</b> Сторінка вертикального світлофора</p>
-  <br/>
-
-  <img src="Images/horizontal_page.png" width="500" />
-  <p><b>Рисунок 6.</b> Сторінка горизонтального світлофора</p>
-
-</div>
-
----
-
-### 9. Головна сторінка
-
-**Скріншот:**  
-<div align="center">
-  <figure>
-    <img src="Images/home_page.png" width="80%" alt="Home Page"/>
-    <br/>
-    <sub><b>Рис. 7:</b> Головна сторінка з описом лабораторної роботи №6</sub>
-  </figure>
-</div>
-
----
-
-### 10. Сторінка помилок
-
-**Скріншот:**  
-<div align="center">
-  <figure>
-    <img src="Images/error_page.png" width="80%" alt="Error Page"/>
-    <br/>
-    <sub><b>Рис. 8:</b> Сторінка помилки 404</sub>
-  </figure>
-</div>
-
----
-
-### 11. Запуск проєкту
+### 9. Запуск проєкту
 
 ```bash
-cd traffic-lights-6
-pnpm run dev
+npm run start
 ```
 
-**Скріншот:**  
+Запускається одночасно:
+- Vite dev server → `http://localhost:5173`
+- json-server → `http://localhost:3001`
+
+**Скріншот:**
 <div align="center">
   <figure>
     <img src="Images/run_dev.png" width="80%" alt="Running App"/>
     <br/>
-    <sub><b>Рис. 9:</b> Результат виконання команди <code>pnpm run dev</code></sub>
+    <sub><b>Рис. 5:</b> Результат виконання команди <code>npm run start</code></sub>
+  </figure>
+</div>
+
+---
+
+### 10. Демонстрація збереження даних
+
+**Скріншот:**
+<div align="center">
+  <figure>
+    <img src="Images/horizontal_page.png" width="80%" alt="Horizontal Page"/>
+    <br/>
+    <sub><b>Рис. 6:</b> Сторінка горизонтального світлофора — дані зберігаються після F5</sub>
   </figure>
 </div>
 
@@ -268,66 +308,62 @@ pnpm run dev
 
 ### Реалізовані функції:
 
-1. **Анімація моргання (framer-motion):**
-   - Клік на лампу → ефект моргання через `animate()` з framer-motion
-   - Використання `useRef` для прямого посилання на DOM-елемент
-   - Динамічні keyframes залежно від кількості морганнь
-   - Мікроанімації `whileHover` та `whileTap`
+1. **React Context API:**
+   - Створено `TrafficLightsContext` з `createContext()`
+   - Створено `TrafficLightsProvider` з `useReducer` для керування станом
+   - Створено хук `useTrafficLights()` для доступу до контексту
+   - Відрефакторено сторінки — прибрано `useState`, замінено на `useContext`
 
-2. **Керування яскравістю:**
-   - Слайдер від 15% до 100%
-   - Зміна `opacity` та `filter: brightness()` лампи в реальному часі
-   - Кольорова смужка-індикатор яскравості
+2. **json-server:**
+   - Встановлено та налаштовано `json-server`
+   - Реалізовано структуру `db.json` (світлофори, кольори, кліки, налаштування)
+   - Реалізовано REST API запити: GET, POST, PATCH, DELETE
+   - Дані зберігаються між перезапусками додатку
 
-3. **Керування кількістю морганнь:**
-   - Слайдер від 1 до 10
-   - Впливає на кількість циклів анімації та тривалість
+3. **useReducer:**
+   - Єдиний reducer обробляє всі зміни стану через actions
+   - Actions: `INIT`, `ADD_LIGHT`, `REMOVE_LIGHT`, `CLICK_COLOR`, `UPDATE_SETTINGS`
 
-4. **Множинні світлофори:**
-   - Кнопка "+ Додати світлофор"
-   - Кожен світлофор має власний лічильник кліків
-   - Кнопка видалення для кожної картки
-   - Анімоване з'явлення та зникнення через `AnimatePresence`
+4. **proxy (vite.config.js):**
+   - `/api/*` проксіюється на `http://localhost:3001`
+   - Уникнення CORS помилок
 
-5. **Анімоване з'явлення (додаткове завдання):**
-   - Spring-анімація появи карток
-   - Плавний перехід при завантаженні сторінки
-
-6. **Маршрутизація (з Lab 5):**
-   - Збережена структура React Router
-   - Header з NavLink навігацією
-   - ErrorPage для неіснуючих маршрутів
+5. **Збережено з Lab 6:**
+   - Анімація моргання через `framer-motion`
+   - Слайдери яскравості та морганнь
+   - Маршрутизація React Router
+   - Множинні світлофори
 
 ### Технічні деталі:
 
-- **framer-motion:** `motion`, `animate()`, `AnimatePresence`, `useRef`
-- **React Router v6:** `createBrowserRouter`, `NavLink`, `Outlet`, `useRouteError`
-- **Анімація:** keyframes через масив значень opacity
-- **useRef vs getElementById:** прямий доступ до DOM без глобального пошуку
-- **State Management:** локальний useState для кожної сторінки
-- **CSS:** backdrop-filter, radial-gradient для реалістичних ламп
+- **Context API:** `createContext`, `useContext`, `Provider`
+- **useReducer:** actions-based state management
+- **json-server:** mock REST API з db.json
+- **concurrently:** паралельний запуск процесів
+- **fetch API:** GET, POST, PATCH, DELETE запити
+- **vite proxy:** перенаправлення запитів без CORS
 
 ---
 
 ## Висновки
 
 У ході виконання лабораторної роботи було успішно:
-- Освоєно роботу з бібліотекою `framer-motion`
-- Реалізовано ефект «моргання» через програмну анімацію `animate()`
-- Реалізовано зміну яскравості та кількості морганнь через слайдери
-- Реалізовано додавання та видалення декількох світлофорів
-- Реалізовано анімоване з'явлення компонентів (додаткове завдання)
-- Збережено та розширено структуру проєкту з попередньої лабораторної
-- Використано `useRef` для надійного посилання на DOM-елементи
+- Освоєно роботу з React Context API
+- Створено `TrafficLightsProvider` з глобальним станом
+- Відрефакторено сторінки з `useState` на `useContext`
+- Встановлено та інтегровано `json-server`
+- Реалізовано збереження даних у `db.json`
+- Реалізовано повноцінну роботу з REST API (GET, POST, PATCH, DELETE)
+- Збережено та розширено функціонал попередньої лабораторної
 
 ---
 
 ## Посилання
 
-- Репозиторій GitHub: [посилання](https://github.com/AndriyVlonha/Lab6_WEB)
-- Документація framer-motion: https://www.framer.com/motion/
-- animate() API: https://www.framer.com/motion/animate/
-- useRef (React): https://react.dev/reference/react/useRef
-- React Router v6: https://reactrouter.com/en/main
+- Репозиторій GitHub: [посилання](https://github.com/AndriyVlonha/Lab7_WEB)
+- React Context API: https://react.dev/reference/react/createContext
+- useReducer: https://react.dev/reference/react/useReducer
+- json-server: https://www.npmjs.com/package/json-server
+- React Router v7: https://reactrouter.com/en/main
 
 ---
