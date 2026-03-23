@@ -1,0 +1,107 @@
+/* ── Global — Lab5 style base ── */
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* ── Design tokens ── */
+  --bg: #242424;
+  --bg2: #2a2a3e;
+  --surface: rgba(255, 255, 255, .07);
+  --sur2: rgba(255, 255, 255, .1);
+  --border: rgba(255, 255, 255, .12);
+  --bord2: rgba(255, 255, 255, .22);
+  --text: rgba(255, 255, 255, .87);
+  --muted: rgba(255, 255, 255, .45);
+  --dim: rgba(255, 255, 255, .2);
+
+  /* Lab5 accent */
+  --accent: #646cff;
+  --alight: #7c84ff;
+  --adark: #4a52d4;
+  --aglow: rgba(100, 108, 255, .3);
+
+  --mono: 'DM Mono', monospace;
+  --r: 10px;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  /* Lab5 purple gradient */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-attachment: fixed;
+}
+
+/* subtle noise overlay for depth */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, .04) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Lab5-style buttons */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  color: rgba(255, 255, 255, .7);
+  cursor: pointer;
+  transition: border-color 0.25s, color 0.25s;
+}
+
+button:hover {
+  border-color: #646cff;
+  color: var(--alight);
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #535bf2;
+}
+
+code {
+  background: rgba(0, 0, 0, .3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #6bcf7f;
+  font-family: var(--mono);
+}
