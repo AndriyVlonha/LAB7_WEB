@@ -1,14 +1,14 @@
-# Laboratory Report No. 6
+# Laboratory Report No. 7
 
 **Student:** Andriy Vlonha  
 **Group:** 42-CS  
-**Date:** 16/03/2026
+**Date:** 23/03/2026
 
 ---
 
 ## Objective
 
-To learn how to work with animations in React using the `framer-motion` library. Implement a "blinking" effect when clicking on a traffic light color, along with brightness and blink count controls. This work is a continuation of Laboratory Work No. 5.
+To learn how to work with React Context API. Refactor Laboratory Work No. 6 using context instead of local state. Install and integrate the `json-server` library to persist data between page reloads.
 
 ---
 
@@ -16,248 +16,289 @@ To learn how to work with animations in React using the `framer-motion` library.
 
 ---
 
-### 1. Creating a New Project
+### 1. Creating the Project Based on Lab 6
 
-Created a new React project named `traffic-lights-6` based on the previous lab:
+Copied the `traffic-lights-6` project as a base and installed new dependencies:
 
 ```bash
-pnpm create vite@latest traffic-lights-6 -- --template react
-cd traffic-lights-6
-pnpm install
-pnpm install framer-motion
-pnpm install react-router-dom
+npm install
+npm install json-server concurrently
 ```
 
+**Added to `package.json`:**
+
+```json
+"scripts": {
+  "server": "json-server --watch db.json --port 3001",
+  "start": "concurrently \"npm run dev\" \"npm run server\""
+},
+"devDependencies": {
+  "concurrently": "^8.2.2",
+  "json-server": "^0.17.4"
+}
+```
 
 ---
 
-### 2. Installing framer-motion
+### 2. Project Structure
 
-Installed the `framer-motion` library for animations:
-
-```bash
-pnpm install framer-motion
-```
-
-**Description:**
-- `framer-motion` — animation library for React
-- Provides the `motion` component for animating DOM elements
-- The `animate()` function is used for programmatic animation via ref
-
----
-
-### 3. Project Structure
-
-**File structure:**
-
-**Screenshot:**  
+**Screenshot:**
 <div align="center">
   <figure>
     <img src="Images/project_structure.png" width="60%" alt="Project Structure"/>
     <br/>
-    <sub><b>Fig. 1:</b> Project structure for traffic-lights-6</sub>
+    <sub><b>Fig. 1:</b> Project structure for traffic-lights-7</sub>
   </figure>
 </div>
 
 ---
 
-### 4. Implementing the Blink Effect with framer-motion
+### 3. Creating db.json
 
-**Core Lab 6 feature — blink animation on click.**
+Implemented data storage structure for the traffic light:
 
-Used `useRef` to reference the lamp DOM element directly, and the `animate()` function from framer-motion.
+**File: `db.json`**
 
-**Description:**
-- `useRef` — directly references the DOM element without searching the entire document
-- `animate(el, { opacity: frames })` — programmatic animation via framer-motion
-- Keyframes are built dynamically based on `blinkCount`
-- `whileHover` and `whileTap` — hover and click micro-animations
-
-**Screenshot:**  
-<div align="center">
-  <figure>
-    <img src="Images/blink_animation.png" width="80%" alt="Blink Animation"/>
-    <br/>
-    <sub><b>Fig. 2:</b> Blink effect on lamp click</sub>
-  </figure>
-</div>
-
----
-
-### 5. Implementing Control Sliders
-
-**Additional task — brightness and blink count controls.**
-
-Each traffic light page features a sidebar with two sliders.
-
-**Code: `src/Pages/VerticalTrafficLight.jsx` (excerpt)**
-
-```jsx
-const VerticalTrafficLight = () => {
-  const [lights, setLights]         = useState([makeLight(1)])
-  const [blinkCount, setBlinkCount] = useState(3)
-  const [brightness, setBrightness] = useState(1.0)
-
-  return (
-    <div className="tl-page">
-      <aside className="tl-sidebar">
-        <label className="ctrl-group">
-          <span className="ctrl-label">Blink count</span>
-          <input type="range" min="1" max="10" step="1"
-            value={blinkCount}
-            onChange={e => setBlinkCount(Number(e.target.value))} />
-          <span className="ctrl-val">{blinkCount}x</span>
-        </label>
-
-        <label className="ctrl-group">
-          <span className="ctrl-label">Brightness</span>
-          <input type="range" min="0.15" max="1" step="0.05"
-            value={brightness}
-            onChange={e => setBrightness(parseFloat(e.target.value))} />
-          <span className="ctrl-val">{Math.round(brightness * 100)}%</span>
-        </label>
-
-        <button className="ctrl-add" onClick={addLight}>
-          + Add traffic light
-        </button>
-      </aside>
-      {/* ... */}
-    </div>
-  )
+```json
+{
+  "lights": [
+    {
+      "id": 1,
+      "name": "Traffic Light #1",
+      "colors": [
+        { "id": "red",    "label": "Red",    "hex": "#ff3b3b", "clicks": 0 },
+        { "id": "yellow", "label": "Yellow", "hex": "#ffc107", "clicks": 0 },
+        { "id": "green",  "label": "Green",  "hex": "#00e676", "clicks": 0 }
+      ]
+    }
+  ],
+  "settings": {
+    "id": 1,
+    "blinkCount": 3,
+    "brightness": 1.0
+  }
 }
 ```
 
 **Description:**
-- **Blink count slider** — range 1–10, affects number of animation cycles
-- **Brightness slider** — range 15–100%, changes lamp opacity and filter in real time
-- Color strip below brightness slider — visual indicator
-- State is independent for each page
+- `lights` — array of traffic lights with colors and click counts
+- `settings` — global settings (blink count, brightness)
+- json-server automatically creates a REST API from this file
 
-**Screenshot:**  
+**Screenshot:**
 <div align="center">
   <figure>
-    <img src="Images/controls_panel.png" width="80%" alt="Controls Panel"/>
+    <img src="Images/db_json.png" width="80%" alt="db.json"/>
     <br/>
-    <sub><b>Fig. 3:</b> Control panel with sliders</sub>
+    <sub><b>Fig. 2:</b> db.json structure after several clicks</sub>
   </figure>
 </div>
 
 ---
 
-### 6. Multiple Traffic Lights
+### 4. Configuring vite.config.js (proxy)
 
-**Additional feature — ability to add multiple traffic lights.**
+To avoid CORS errors when making requests to json-server:
 
-Implemented an "+ Add traffic light" button that creates a new card with its own click state.
+**File: `vite.config.js`**
 
-```jsx
-const makeLight = (id) => ({
-  id,
-  name: id === 1 ? 'Traffic Light #1' : `Traffic Light #${id}`,
-  clicks: { red: 0, yellow: 0, green: 0 },
+```js
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })
-
-const [lights, setLights] = useState([makeLight(1)])
-
-const addLight    = () => setLights(p => [...p, makeLight(Date.now())])
-const removeLight = (id) => setLights(p => p.filter(l => l.id !== id))
 ```
 
-**Important:** Each traffic light has a unique `id` (via `Date.now()`), which ensures correct animation — clicking the third traffic light only blinks its own lamps, not the first one's. This is achieved using `useRef` which directly references the specific DOM element.
-
-**Screenshot:**  
-<div align="center">
-  <figure>
-    <img src="Images/multiple_lights.png" width="80%" alt="Multiple Traffic Lights"/>
-    <br/>
-    <sub><b>Fig. 4:</b> Multiple traffic lights with independent counters</sub>
-  </figure>
-</div>
+**Description:**
+- Requests to `/api/lights` are proxied to `http://localhost:3001/lights`
+- Vite and json-server run on different ports (5173 and 3001)
 
 ---
 
-### 7. Animated Appearance (Additional Task)
+### 5. Creating TrafficLightsContext (main task)
 
-**Animated entrance on page load and when adding a new card.**
+**File: `src/context/TrafficLightsContext.jsx`**
 
 ```jsx
-// Page entrance animation
-<motion.div
-  className="traffic-light-page"
-  initial={{ opacity: 0, y: 24 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.35, ease: 'easeOut' }}
->
+import { createContext, useContext, useEffect, useReducer, useCallback } from 'react'
 
-// New card entrance animation
-<motion.div
-  key={light.id}
-  initial={{ opacity: 0, y: 32, scale: 0.92 }}
-  animate={{ opacity: 1, y: 0, scale: 1 }}
-  exit={{ opacity: 0, scale: 0.85, y: -16 }}
-  layout
-  transition={{ type: 'spring', stiffness: 280, damping: 24 }}
->
+const TrafficLightsContext = createContext(null)
+
+export function TrafficLightsProvider({ children }) {
+  const [state, dispatch] = useReducer(reducer, {
+    lights: [], settings: { blinkCount: 3, brightness: 1.0 }, loading: true,
+  })
+
+  // Load data from json-server on mount
+  useEffect(() => {
+    Promise.all([api.getLights(), api.getSettings()])
+      .then(([lights, settings]) => {
+        dispatch({ type: 'INIT', lights, settings })
+      })
+      .catch(() => {
+        dispatch({ type: 'INIT', lights: DEFAULT_LIGHTS, settings: DEFAULT_SETTINGS })
+      })
+  }, [])
+
+  const addLight = useCallback(async () => {
+    const newLight = { name: `Traffic Light #${Date.now()}`, colors: [...] }
+    const saved = await api.createLight(newLight)   // POST /api/lights
+    dispatch({ type: 'ADD_LIGHT', light: saved })
+  }, [])
+
+  const clickColor = useCallback(async (lightId, colorId) => {
+    dispatch({ type: 'CLICK_COLOR', lightId, colorId })
+    await api.updateLight(lightId, { colors: updatedColors }) // PATCH /api/lights/:id
+  }, [state.lights])
+
+  return (
+    <TrafficLightsContext.Provider value={{
+      lights, settings, loading, addLight, removeLight, clickColor, updateSettings
+    }}>
+      {children}
+    </TrafficLightsContext.Provider>
+  )
+}
+
+export function useTrafficLights() {
+  return useContext(TrafficLightsContext)
+}
+```
+
+**Description:**
+- `createContext()` — creates a container for global state
+- `TrafficLightsProvider` — wraps the app and provides state to all child components
+- `useReducer` — manages complex state through actions
+- `useTrafficLights()` — hook for accessing context from any component
+- Every action (click, add) is saved to `db.json` via json-server
+
+**Screenshot:**
+<div align="center">
+  <figure>
+    <img src="Images/context_file.png" width="80%" alt="Context File"/>
+    <br/>
+    <sub><b>Fig. 3:</b> TrafficLightsContext.jsx file</sub>
+  </figure>
+</div>
+
+---
+
+### 6. Wrapping the App in Provider
+
+**File: `src/main.jsx`**
+
+```jsx
+// Lab 6:
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+)
+
+// Lab 7:
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <TrafficLightsProvider>
+      <App />
+    </TrafficLightsProvider>
+  </StrictMode>
+)
+```
+
+**Description:**
+- Provider wraps the entire app
+- Any component inside can access the state via `useTrafficLights()`
+
+---
+
+### 7. Refactoring Pages (useState → useContext)
+
+**File: `src/Pages/VerticalTrafficLight.jsx`**
+
+```jsx
+// Lab 6:
+const [lights, setLights]         = useState([makeLight(1)])
+const [blinkCount, setBlinkCount] = useState(3)
+const [brightness, setBrightness] = useState(1.0)
+const addLight = () => setLights(p => [...p, makeLight(Date.now())])
+
+// Lab 7:
+const { lights, settings, addLight, removeLight, clickColor, updateSettings }
+  = useTrafficLights()
+// useState completely removed — state comes from context
+```
+
+**Screenshot:**
+<div align="center">
+  <figure>
+    <img src="Images/vertical_page.png" width="80%" alt="Vertical Page"/>
+    <br/>
+    <sub><b>Fig. 4:</b> Vertical traffic light page</sub>
+  </figure>
+</div>
+
+---
+
+### 8. REST API Requests to json-server
+
+```js
+const api = {
+  getLights:      ()         => fetch('/api/lights').then(r => r.json()),
+  getSettings:    ()         => fetch('/api/settings/1').then(r => r.json()),
+  createLight:    (data)     => fetch('/api/lights', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+  updateLight:    (id, data) => fetch(`/api/lights/${id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+  deleteLight:    (id)       => fetch(`/api/lights/${id}`, { method: 'DELETE' }),
+  updateSettings: (data)     => fetch('/api/settings/1', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).then(r => r.json()),
+}
 ```
 
 ---
 
-### 8. Vertical and Horizontal Traffic Light Pages
-
-**Screenshots:**
-
-<div align="center">
-
-  <img src="Images/vertical_page.png" width="400" />
-  <p><b>Figure 5.</b> Vertical traffic light page</p>
-  <br/>
-
-  <img src="Images/horizontal_page.png" width="500" />
-  <p><b>Figure 6.</b> Horizontal traffic light page</p>
-
-</div>
-
----
-
-### 9. Home Page
-
-**Screenshot:**  
-<div align="center">
-  <figure>
-    <img src="Images/home_page.png" width="80%" alt="Home Page"/>
-    <br/>
-    <sub><b>Fig. 7:</b> Home page with Lab 6 description</sub>
-  </figure>
-</div>
-
----
-
-### 10. Error Page
-
-**Screenshot:**  
-<div align="center">
-  <figure>
-    <img src="Images/error_page.png" width="80%" alt="Error Page"/>
-    <br/>
-    <sub><b>Fig. 8:</b> 404 Error page</sub>
-  </figure>
-</div>
-
----
-
-### 11. Running the Project
+### 9. Running the Project
 
 ```bash
-cd traffic-lights-6
-pnpm run dev
+npm run start
 ```
 
-**Screenshot:**  
+Starts simultaneously:
+- Vite dev server → `http://localhost:5173`
+- json-server → `http://localhost:3001`
+
+**Screenshot:**
 <div align="center">
   <figure>
     <img src="Images/run_dev.png" width="80%" alt="Running App"/>
     <br/>
-    <sub><b>Fig. 9:</b> Result of executing <code>pnpm run dev</code></sub>
+    <sub><b>Fig. 5:</b> Result of executing <code>npm run start</code></sub>
+  </figure>
+</div>
+
+---
+
+### 10. Demonstrating Data Persistence
+
+**Screenshot:**
+<div align="center">
+  <figure>
+    <img src="Images/horizontal_page.png" width="80%" alt="Horizontal Page"/>
+    <br/>
+    <sub><b>Fig. 6:</b> Horizontal traffic light page — data persists after F5</sub>
   </figure>
 </div>
 
@@ -267,66 +308,62 @@ pnpm run dev
 
 ### Implemented Features:
 
-1. **Blink animation (framer-motion):**
-   - Click on lamp → blink effect via `animate()` from framer-motion
-   - `useRef` for direct DOM element reference without global document search
-   - Dynamically built keyframes based on blink count
-   - `whileHover` and `whileTap` micro-animations
+1. **React Context API:**
+   - Created `TrafficLightsContext` with `createContext()`
+   - Created `TrafficLightsProvider` with `useReducer` for state management
+   - Created `useTrafficLights()` hook for context access
+   - Refactored pages — removed `useState`, replaced with `useContext`
 
-2. **Brightness control:**
-   - Slider from 15% to 100%
-   - Changes lamp `opacity` and `filter: brightness()` in real time
-   - Color strip as brightness visual indicator
+2. **json-server:**
+   - Installed and configured `json-server`
+   - Implemented `db.json` structure (lights, colors, clicks, settings)
+   - Implemented REST API requests: GET, POST, PATCH, DELETE
+   - Data persists between page reloads
 
-3. **Blink count control:**
-   - Slider from 1 to 10
-   - Affects number of animation cycles and total duration
+3. **useReducer:**
+   - Single reducer handles all state changes via actions
+   - Actions: `INIT`, `ADD_LIGHT`, `REMOVE_LIGHT`, `CLICK_COLOR`, `UPDATE_SETTINGS`
 
-4. **Multiple traffic lights:**
-   - "+ Add traffic light" button
-   - Each traffic light has its own click counters per color
-   - Delete button on each card
-   - Animated appearance and removal via `AnimatePresence`
+4. **proxy (vite.config.js):**
+   - `/api/*` proxied to `http://localhost:3001`
+   - Avoids CORS errors
 
-5. **Animated appearance (additional task):**
-   - Spring animation for card entrance
-   - Smooth page transition on load
-
-6. **Routing (from Lab 5):**
-   - Preserved React Router structure
-   - Header with NavLink navigation
-   - ErrorPage for non-existent routes
+5. **Preserved from Lab 6:**
+   - framer-motion blink animation
+   - Brightness and blink count sliders
+   - React Router navigation
+   - Multiple traffic lights
 
 ### Technical Details:
 
-- **framer-motion:** `motion`, `animate()`, `AnimatePresence`, `useRef`
-- **React Router v6:** `createBrowserRouter`, `NavLink`, `Outlet`, `useRouteError`
-- **Animation:** keyframes via opacity value array
-- **useRef vs getElementById:** direct DOM access without global search
-- **State Management:** local `useState` for each page
-- **CSS:** `backdrop-filter`, `radial-gradient` for realistic lamp rendering
+- **Context API:** `createContext`, `useContext`, `Provider`
+- **useReducer:** actions-based state management
+- **json-server:** mock REST API from db.json
+- **concurrently:** parallel process execution
+- **fetch API:** GET, POST, PATCH, DELETE requests
+- **vite proxy:** request forwarding without CORS
 
 ---
 
 ## Conclusion
 
 During this laboratory work, I successfully:
-- Mastered working with the `framer-motion` library
-- Implemented the "blinking" effect via programmatic `animate()` animation
-- Implemented brightness and blink count control via sliders
-- Implemented adding and removing multiple traffic lights
-- Implemented animated component entrance (additional task)
-- Preserved and extended the project structure from the previous lab
-- Used `useRef` for reliable direct DOM element references
+- Mastered working with React Context API
+- Created `TrafficLightsProvider` with global state
+- Refactored pages from `useState` to `useContext`
+- Installed and integrated `json-server`
+- Implemented data persistence in `db.json`
+- Implemented full REST API interaction (GET, POST, PATCH, DELETE)
+- Preserved and extended functionality from the previous lab
 
 ---
 
 ## References
 
-- GitHub Repository: [link](https://github.com/AndriyVlonha/Lab6_WEB)
-- framer-motion Documentation: https://www.framer.com/motion/
-- animate() API: https://www.framer.com/motion/animate/
-- useRef (React): https://react.dev/reference/react/useRef
-- React Router v6: https://reactrouter.com/en/main
+- GitHub Repository: [link](https://github.com/AndriyVlonha/Lab7_WEB)
+- React Context API: https://react.dev/reference/react/createContext
+- useReducer: https://react.dev/reference/react/useReducer
+- json-server: https://www.npmjs.com/package/json-server
+- React Router v7: https://reactrouter.com/en/main
 
 ---
